@@ -1,47 +1,92 @@
 ---
 title: "Quickstart"
-description: "Begin with a guide on the fastest path to a successful outcome"
+description: "From clone to a running Relay stack — backend, desktop, and client portal — in one command."
 ---
-
-Describe how someone begins using your product. What is the first thing they need to do? Are there any prerequisites?
-
-A quickstart should take someone from zero to using your product. They'll get a quick win and a sense of what they can accomplish.
 
 ## Prerequisites
 
-Before you begin, you must have:
+- **Node.js** ≥ 20 and **pnpm** ≥ 9
+- **Docker** — running, for Postgres (pgvector) and the backend container
+- **Rust toolchain** (`cargo`, `rustc`) — only for the native desktop app;
+  skip it if you run the UI in the browser
 
-- Requirement one (for example, Node.js 18+, a free account, an API key)
-- Requirement two (for example, a compatible device, a compatible browser, a compatible operating system)
-
-## Get started
+## Run the stack
 
 <Steps>
-  <Step title="Install">
-    Describe how to install your product or sign up.
-
+  <Step title="Clone and install">
     ```bash
-    npm install your-package
+    git clone git@github.com:termdx/Relay.git
+    cd Relay
+    pnpm install
     ```
   </Step>
-  <Step title="Configure">
-    Describe any setup or configuration needed before first use.
+  <Step title="Start everything">
+    ```bash
+    pnpm dev
+    ```
+
+    This boots the whole local stack: the runtime daemon (`:51720`), a
+    pgvector Postgres + the NestJS backend (`:3000`) as containers, and the
+    desktop app. First run builds the backend image and the Rust shell —
+    later runs are cached.
+
+    Prefer the browser over a native window (no Rust build)?
 
     ```bash
-    your-cli init
+    pnpm dev:web    # desktop UI at http://localhost:5173
     ```
   </Step>
-  <Step title="Run it">
-    Show the first thing a user does to see it working.
+  <Step title="Create your owner account">
+    On first launch the app shows **Set up your workspace** — name, email,
+    password. This is the owner account of your self-hosted instance; you
+    land on the Clients page right after.
+  </Step>
+  <Step title="Create a client and a project">
+    Add your first client, then a project on their page. The project is
+    where the timeline, todos, decisions, meetings, and knowledge live.
+  </Step>
+  <Step title="Invite the client to their portal">
+    On the client's page, click **Copy sign-in link**. Relay mints a
+    single-use, 15-minute link you can paste into any channel — no email
+    setup required.
+
+    Or start the portal and let them request their own link by email:
 
     ```bash
-    your-cli start
+    pnpm portal:dev    # client portal at http://localhost:5174
     ```
+
+    Their portal shows live progress, pending approvals, and **Ask** — the
+    Relay AI chat grounded in the project's knowledge base.
   </Step>
 </Steps>
 
-<Tip>
-  Give people a way to get help. This could be a link to a support page, a chat with a customer support agent, or a forum for your product.
+## What runs where
 
-  Example: Need help? Reach out to us at [support@yourcompany.com](mailto:support@yourcompany.com).
+| Surface | URL |
+|---|---|
+| Desktop UI (web mode) | `http://localhost:5173` |
+| Backend API | `http://localhost:3000` (`/health`) |
+| Client portal | `http://localhost:5174` |
+| Runtime daemon | `http://127.0.0.1:51720` (`/health`) |
+
+**Stopping:** Ctrl-C in the dev terminal tears down what it started.
+
+## Real AI answers
+
+The default AI provider is an offline stub. For real drafts, embeddings,
+and chat answers, add a Gemini provider to the workspace — from the desktop
+(**Runtime → AI**) or the CLI (`relay ai add gemini`). The key goes into the
+encrypted secret store and is injected when the runtime regenerates the
+stack.
+
+Iterating with `pnpm dev:local` instead? Env passthrough works there:
+
+```bash
+AI_PROVIDER=gemini GEMINI_API_KEY=... pnpm dev:local
+```
+
+<Tip>
+  `pnpm dev:local` runs Postgres standalone and `nest start` directly —
+  no image rebuilds while you edit the backend.
 </Tip>
