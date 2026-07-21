@@ -1,0 +1,72 @@
+---
+title: "Configuration"
+description: "The environment and connection settings that shape a deployment."
+---
+
+Most configuration is managed for you — the runtime generates the backend's
+environment from your installed manifests and encrypted secrets. This page
+covers the settings you touch directly.
+
+## Desktop: agency server
+
+In **Settings → Agency server**, point the desktop at a deployment:
+
+<ParamField path="Backend URL" type="string">
+  The backend API base, e.g. `https://relay.youragency.com/api`. Leave at the
+  local default (`http://localhost:3000`) to use a local `pnpm dev` stack.
+</ParamField>
+
+<ParamField path="Runtime URL" type="string">
+  The runtime daemon, e.g. `https://relay.youragency.com/runtime` (or
+  `http://127.0.0.1:51720` locally).
+</ParamField>
+
+<ParamField path="Runtime token" type="string">
+  The `RELAY_RUNTIME_TOKEN` printed by the server installer. Sent as
+  `X-Relay-Token` to the runtime daemon.
+</ParamField>
+
+Saving reconnects the app. Use **Use local stack** to switch back to localhost.
+
+## Server: environment
+
+The server installer writes these; you rarely set them by hand:
+
+<ParamField path="RELAY_RUNTIME_TOKEN" type="string">
+  Gates the runtime daemon — every non-health request must present it. Generated
+  once and reused across installer runs.
+</ParamField>
+
+<ParamField path="RELAY_PUBLIC_URL" type="string">
+  Your public base, e.g. `https://relay.youragency.com`. Becomes the base for
+  approval links, portal sign-in emails, and webhook URLs, and is passed to the
+  backend as `PUBLIC_BASE_URL` / `PUBLIC_PORTAL_URL`.
+</ParamField>
+
+## Backend: generated from the workspace
+
+These are injected into the backend container by the runtime at generate time —
+managed through the desktop or CLI, not edited directly:
+
+| Variable | Set by |
+|---|---|
+| `DATABASE_URL`, `POSTGRES_PASSWORD` | the generated compose stack |
+| `JWT_SECRET` | generated once, stored in workspace secrets |
+| `AI_PROVIDER` + provider keys (`GEMINI_API_KEY`, `OPENAI_API_KEY`, …) | your connected [AI providers](/guides/ai-providers) |
+| Integration credentials (`GITHUB_TOKEN`, `SMTP_URL`, chat webhooks, …) | your connected [integrations](/guides/integrations) |
+| Per-provider webhook secrets, `INGEST_SECRET` | generated when you connect each integration |
+
+<Info>
+  Because the runtime injects these at generate time, connecting a new
+  integration or AI provider takes effect on the next `up` without reinstalling
+  or hand-editing anything.
+</Info>
+
+## Local development
+
+`pnpm dev:local` runs Postgres standalone and `nest start` directly, and honors
+env passthrough for quick iteration:
+
+```bash
+AI_PROVIDER=gemini GEMINI_API_KEY=... pnpm dev:local
+```

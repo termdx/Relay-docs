@@ -1,0 +1,61 @@
+---
+title: "Security"
+description: "How Relay isolates tenants, guards side effects, and protects secrets."
+---
+
+Relay is built so that a self-hosted agency can put a client in front of it
+safely. The guarantees below hold at the query and infrastructure layers, not
+by convention.
+
+## Identities
+
+- **Owner and team** — full workspace access via JWT. The owner is the first
+  account; team members join by invite and hold the member role.
+- **Clients** — scoped portal identities via magic link. A client can only ever
+  reach their own projects.
+
+Portal sessions are signed with a secret derived from the backend's JWT secret,
+so a portal token can never pass the owner guard — the identities are separated
+by signature, not just by a role claim.
+
+## Tenant isolation
+
+Isolation lives in the **query layer**. The portal API and knowledge retrieval
+filter by client and project in SQL — never by prompt instructions or by hiding
+UI. A disabled portal section returns a 404 from the API, not a blank div.
+
+<Warning>
+  Because retrieval scope is decided in SQL before the model sees anything,
+  prompt injection in ingested content (a malicious commit message, say) cannot
+  widen what a client can retrieve.
+</Warning>
+
+## The approval gate
+
+No external side effect — an issue created, an email sent, content published to
+the portal — fires without a persisted approval record behind it. This is
+enforced in the flow, not left to the caller.
+
+## Secrets
+
+Integration credentials and AI provider keys live in the runtime's encrypted
+store: a master key plus a secrets file, mode `0600`. Manifests and generated
+artifacts reference secrets by name; they never contain values, and keys never
+round-trip through the UI after entry.
+
+## Webhooks
+
+Every inbound webhook is signature-verified per vendor against the raw body
+before anything is normalized. Unverifiable payloads are dropped and logged.
+See [Webhooks](/self-hosting/webhooks).
+
+## Magic links
+
+Portal sign-in and approval links are single-purpose, expiring, and revocable —
+a sign-in link lasts 15 minutes and is single-use.
+
+## Transport
+
+HTTPS everywhere in deployment; the [server installer](/self-hosting/server-install)
+provisions TLS via Caddy automatically. The runtime daemon is token-gated and,
+in the hosted model, only reachable through the proxied `/runtime` path.

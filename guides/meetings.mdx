@@ -1,0 +1,68 @@
+---
+title: "Meetings"
+description: "Turn a call transcript into approved, tracked work — the core loop."
+---
+
+The meeting flow is Relay's core loop end to end: a transcript becomes an AI
+draft, you review it, the client approves, and the agreed tasks land in your
+issue tracker — all recorded on the project.
+
+```text
+transcript → AI draft (summary + tasks) → your review → client approval → issues
+```
+
+## Create a meeting
+
+<Steps>
+  <Step title="Start a meeting on a project">
+    On the project page, create a meeting and give it a title.
+  </Step>
+  <Step title="Add the transcript">
+    Paste the transcript, or import a transcript file directly in the form.
+    Prefer to skip pasting entirely? See [Transcript ingest](/guides/transcript-ingest)
+    for a per-project webhook URL that turns any call into a drafted meeting
+    automatically.
+  </Step>
+  <Step title="Generate the draft">
+    Relay's `draft` AI capability reads the transcript and produces a
+    client-ready **summary** plus a list of proposed **tasks** (each with an
+    optional assignee). Nothing is committed yet.
+  </Step>
+</Steps>
+
+<Note>
+  Drafting uses your default AI provider. With the offline stub you'll get
+  placeholder output — connect a real provider (see
+  [AI providers](/guides/ai-providers)) for genuine drafts.
+</Note>
+
+## Review and edit
+
+The draft is yours to correct before anyone sees it. Edit the summary, add or
+remove tasks, fix assignees. When it's right, send it to the client for
+approval — this creates an **approval record** with a frozen snapshot of what
+you sent.
+
+## What happens on approval
+
+When the client approves (see [Approvals](/guides/approvals)):
+
+1. The approved tasks sync into the project's **todos**.
+2. Each task is published as an **issue** in the project's linked repository —
+   GitHub, GitLab, or Bitbucket — through the transactional outbox, so a
+   transient failure retries instead of losing the work.
+3. The meeting, its decision, and the resulting issues all land on the
+   **timeline** and flow into the **knowledge base**.
+
+<Info>
+  Publishing is resume-safe: each task records its issue URL as it's created,
+  so a retried batch never double-files. Issues are only created after
+  approval — never from the draft.
+</Info>
+
+## Assignees
+
+If a task names someone who isn't a valid repository username, Relay doesn't
+guess — it files the issue without an assignee and notes the intended assignee
+in the issue body. This avoids failed issue creation when transcript names
+don't map to accounts.

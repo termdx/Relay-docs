@@ -1,0 +1,34 @@
+---
+title: "Branding"
+description: "Make the client portal yours — name, logo, and accent color."
+---
+
+The client portal is your agency's front door, so it wears your brand, not
+Relay's. Set it once from the desktop **Branding** page.
+
+## What you can set
+
+- **Agency name** — the portal title and sign-in heading.
+- **Logo** — an image up to **1 MB**, stored inline as a data URI (or an
+  `https` URL). No object storage required.
+- **Accent color** — a `#rrggbb` hex. The portal themes its primary color from
+  it, computing readable contrast for text automatically.
+
+## Where it shows
+
+Branding is served publicly at `GET /portal/branding` — the login page needs
+it before a client authenticates — so your name and logo appear on:
+
+- the portal sign-in page,
+- the portal header once signed in,
+- the team invite join page.
+
+<Note>
+  The "Powered by Relay" badge stays on the portal. It renders the Relay mark
+  and links back — the portal is your brand, attributed to the platform.
+</Note>
+
+<Tip>
+  Keep the logo well under 1 MB — a tight PNG or SVG-as-data-URI loads fast and
+  looks crisp on the portal header at small sizes.
+</Tip>

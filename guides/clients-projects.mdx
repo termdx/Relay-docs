@@ -1,0 +1,71 @@
+---
+title: "Clients & projects"
+description: "The anchor of everything Relay tracks."
+---
+
+Everything in Relay hangs off a **client**. A client has one or more
+**projects**, and a project is where the work lives — the timeline, todos,
+decisions, meetings, and knowledge base.
+
+## Add a client
+
+<Steps>
+  <Step title="Open Clients">
+    In the desktop app, go to **Clients** and click **New client**.
+  </Step>
+  <Step title="Fill in the details">
+    Name and email are required; company and notes are optional. The email
+    doubles as the client's portal identity and the recipient for approval
+    links, so use the address they'll sign in with.
+  </Step>
+  <Step title="Save">
+    You land on the client's page, ready to add a project.
+  </Step>
+</Steps>
+
+## Add a project
+
+On a client's page, click **New project**. A project can link to:
+
+- **A repository** — `owner/repo` for GitHub, or prefixed for other hosts:
+  `gitlab:group/project`, `bitbucket:workspace/repo`. This is what connects
+  approved meeting tasks to real issues and what inbound webhooks match against.
+- **Notification channels and other links** as your integrations grow.
+
+<Info>
+  The repository you set here is how Relay attributes inbound webhook events to
+  the right project, and where approved tasks become issues. Set it before you
+  run the meeting loop.
+</Info>
+
+## The project page
+
+Each project gathers:
+
+- **Timeline** — an append-only feed of every tracked signal (commits, PRs,
+  issues, meetings, decisions). Timeline events are immutable; corrections are
+  new events.
+- **Todos** — created manually or synced from approved meeting tasks. A todo
+  mapped to a GitHub/GitLab issue auto-completes when that issue closes.
+- **Decisions** — first-class records of what was decided, when, and by whom.
+- **Meetings** — transcript → AI draft → approval → tasks.
+- **Portal visibility** — per-project toggles for what the client sees.
+
+## Portal visibility
+
+What a client sees is your call, set per project from the desktop project page.
+Toggle:
+
+- **Analytics** — the progress dashboard
+- **Activity feed** — with or without raw code events
+- **Deliverables** and **Decisions**
+- **Relay AI chat** — the Ask tab
+
+<Warning>
+  Visibility is enforced server-side: a disabled section returns a 404 from the
+  portal API, not just a hidden UI element. Approvals are always visible —
+  they're the core loop and can't be turned off.
+</Warning>
+
+See [Client portal](/portal/overview) for what each toggle changes on the
+client's side.

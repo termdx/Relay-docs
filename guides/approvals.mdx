@@ -1,0 +1,49 @@
+---
+title: "Approvals"
+description: "AI drafts, humans decide. The gate every client-visible action passes through."
+---
+
+Nothing AI-generated reaches a client, and no external side effect fires,
+without a persisted **approval record**. Approvals are how Relay keeps a human
+in the loop.
+
+## The model
+
+When you send a draft for approval, Relay freezes a **snapshot** of exactly
+what you sent and mints a single-use, expiring **magic-link** token. The client
+opens that link, sees the snapshot, and either **approves** or **requests
+changes** — no account required.
+
+<Info>
+  The snapshot is frozen at send time, so what the client approves is exactly
+  what they saw, even if the underlying draft changes later.
+</Info>
+
+## Where clients approve
+
+Two paths, same result:
+
+- **Approval page** — the magic link opens a standalone approve/request-changes
+  page served by the backend. Works in any browser, no sign-in.
+- **Portal inbox** — signed-in clients see a "Waiting on you" list on the
+  portal's **Approvals** tab, each linking to its approval page. Decided items
+  move to a history list.
+
+## What a decision triggers
+
+On **approve**, the downstream work runs on the transactional outbox — for a
+meeting, that's syncing tasks to todos and publishing issues to the linked
+repo. On **request changes**, the client's comment comes back to you and
+nothing is published.
+
+<Warning>
+  A decision is final and idempotent. Re-opening or re-submitting the same
+  approval link after it's decided does nothing — Relay ignores repeat
+  responses rather than double-firing side effects.
+</Warning>
+
+## Approvals in the portal stay fresh
+
+The portal polls while an approval is pending and refetches when the tab
+regains focus, so an item a client just approved on the approval page moves to
+their history within seconds — no manual refresh.

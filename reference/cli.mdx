@@ -1,0 +1,83 @@
+---
+title: "CLI reference"
+description: "The relay command — drive the runtime from a terminal."
+---
+
+The `relay` CLI runs the runtime engine in-process, against the workspace it
+finds (or `~/.relay/workspaces/default`). Everything the desktop's Runtime
+section does, the CLI does too. Use `-C <path>` to target a specific workspace.
+
+## Workspace lifecycle
+
+```bash
+relay init            # create a workspace
+relay doctor          # check environment prerequisites (Docker, etc.)
+relay status          # what's running
+relay up              # generate compose + .env, then start the stack
+relay down            # stop the stack
+relay restart
+relay logs
+relay generate        # regenerate compose/.env without starting
+relay validate        # cross-manifest diagnostics
+relay daemon start    # start the HTTP daemon on :51720
+```
+
+## Modules
+
+```bash
+relay module list
+relay module catalog
+relay module info <id>
+relay module add <id>       # install + resolve dependencies
+relay module new <id>       # scaffold a new module
+relay module remove <id>
+```
+
+## Integrations
+
+```bash
+relay integration list
+relay integration catalog
+relay integration info <id>
+relay integration add <id>
+relay integration connect <id>   # begin the connect flow (e.g. GitHub device flow)
+relay integration health <id>
+relay integration remove <id>
+```
+
+## AI providers
+
+```bash
+relay ai add <provider>     # e.g. gemini, openai, anthropic, openrouter, ollama, litellm, huggingface
+relay ai list
+relay ai info <id>
+relay ai health <id>        # verify the key and list models
+relay ai models <id>
+relay ai remove <id>
+```
+
+<Note>
+  Set the **default** AI provider from the desktop **Runtime → AI providers**
+  page (**Make default**). The default powers drafts, chat, and embeddings.
+</Note>
+
+## Agents & workflows
+
+```bash
+relay agent new <id>
+relay agent list
+relay agent validate
+relay agent remove <id>
+
+relay workflow new <id>
+relay workflow list
+relay workflow validate
+relay workflow run <id>
+relay workflow remove <id>
+```
+
+<Tip>
+  Running against the daemon vs. in-process: the CLI works in-process by
+  default, which is what you want for bootstrapping (`relay init`, `relay up`)
+  before any daemon exists.
+</Tip>

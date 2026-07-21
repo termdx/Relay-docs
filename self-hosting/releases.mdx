@@ -1,0 +1,56 @@
+---
+title: "Releases & distribution"
+description: "How Relay builds are cut, and how to upgrade a deployment."
+---
+
+Relay ships from CI. Pushing to the `dist` branch builds every artifact and
+attaches it to a GitHub release; the installers pull from the latest release.
+
+## Cutting a release
+
+```bash
+git push origin main:dist
+```
+
+GitHub Actions builds, in parallel:
+
+| Artifact | Platforms |
+|---|---|
+| `relay-runtime-<triple>` — the runtime daemon binary | macOS arm64, Linux x64 |
+| Desktop bundles — `.dmg` / `.deb` | macOS arm64, Linux x64 |
+| `portal-dist.tar.gz` — the client portal static bundle | any |
+| Backend Docker image → GHCR | any |
+| `relay-backend-image.tar.gz` — the same image as a loadable tarball | any |
+
+All are attached to a release tagged `dist-<n>`, marked latest.
+
+<Info>
+  The backend image ships two ways: pushed to GHCR, and saved as a release
+  tarball. The server installer prefers the GHCR pull and falls back to the
+  tarball when the package is private — so anonymous installs always work.
+</Info>
+
+## Upgrading a server
+
+Re-run the [server installer](/self-hosting/server-install). It's idempotent:
+it keeps your runtime token and data, downloads the newer runtime binary,
+refreshes the portal and the download mirror, and reloads the backend image.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/termdx/Relay/main/scripts/install-server.sh \
+  | bash -s -- --domain relay.youragency.com
+```
+
+## Upgrading the desktop
+
+Re-run the [desktop installer](/self-hosting/desktop-install), or grab the
+latest bundle from your server's `/downloads/` mirror. Your session and server
+connection carry over — only the app binary changes.
+
+## Known limitations
+
+- **macOS builds are unsigned** — browser downloads need a one-time
+  `xattr -cr`. Signing + notarization is roadmap.
+- **Linux ships `.deb` only** — the AppImage tooling can't package the compiled
+  sidecar. Use the `.deb` on Debian/Ubuntu.
+- **Windows and x64 macOS** builds aren't produced yet.

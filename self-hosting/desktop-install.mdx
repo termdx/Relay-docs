@@ -1,0 +1,73 @@
+---
+title: "Desktop install"
+description: "Install the founder control plane on macOS or Linux."
+---
+
+The desktop app is how you and your team drive Relay. Install it from your
+agency's server (fastest) or straight from GitHub releases.
+
+## Install
+
+<Tabs>
+  <Tab title="From your agency server">
+    Fastest — the server mirrors the bundles on your own domain, so there's no
+    CDN throttling:
+
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/termdx/Relay/main/scripts/install-desktop.sh \
+      | bash -s -- --server https://relay.youragency.com
+    ```
+
+    You can also grab the bundles directly from
+    `https://relay.youragency.com/downloads/` — `Relay.dmg` and
+    `relay-desktop.deb`.
+  </Tab>
+  <Tab title="From GitHub releases">
+    ```bash
+    curl -fsSL https://raw.githubusercontent.com/termdx/Relay/main/scripts/install-desktop.sh | bash
+    ```
+  </Tab>
+</Tabs>
+
+macOS gets the `.dmg`; Linux gets the `.deb` (installed via `apt`/`dpkg`).
+
+## macOS: "Relay is damaged"
+
+The app is currently **unsigned**, and macOS quarantines anything a browser
+downloads — which it reports as "damaged." It's not. Clear the quarantine flag
+once:
+
+```bash
+xattr -cr /Applications/Relay.app
+```
+
+<Tip>
+  The `curl | bash` installer avoids this entirely — `curl` doesn't set the
+  quarantine flag. The block only appears when you download the `.dmg` in a
+  browser.
+</Tip>
+
+## First run
+
+On first launch the app checks whether it can reach a backend:
+
+- **Local stack** — if you're running `pnpm dev`, it connects to localhost.
+- **Agency server** — otherwise, open **Settings → Agency server** (or the
+  "Connect to an agency server" link on the sign-in screen) and enter your
+  server's Backend URL, Runtime URL, and token. See
+  [Server install](/self-hosting/server-install).
+- **Invite** — if a teammate sent you an invite link, choose "Have an invite?
+  Join your agency" and paste it — that configures the connection for you. See
+  [Team & invites](/guides/team).
+
+## Settings worth knowing
+
+- **Appearance** — light (default), dark, or follow the OS.
+- **Notifications** — mirror in-app toasts to native OS notifications when Relay
+  is in the background, so agent results reach you in your editor.
+- **Profile** — name and avatar.
+
+<Note>
+  Signed, notarized builds (no Gatekeeper prompt) and Windows builds are on the
+  roadmap. Today the targets are macOS (Apple Silicon) and Linux x64.
+</Note>

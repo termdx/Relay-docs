@@ -1,0 +1,89 @@
+---
+title: "Agents & workflows"
+description: "Autonomous helpers that act on a project through a closed set of tools."
+---
+
+An **agent** is a standing instruction that runs against one project using
+real tools — it can search the knowledge base, create todos, record decisions,
+and (when granted) file issues, notify a channel, or email you. A **workflow**
+chains agents into sequential steps.
+
+## How agents run
+
+Execution is a native function-calling loop: the model plans, calls a tool,
+reads the result, and continues until it produces a final report. Every write
+is attributed to the `ai` actor and scoped to the single project you run
+against.
+
+<Info>
+  Runs are queued through the transactional outbox and executed **at-most-once**
+  — a failed run is marked FAILED rather than blindly retried, because
+  re-running side-effectful tool calls is worse than a run you can re-trigger.
+</Info>
+
+## The tools
+
+Every agent gets the core, project-scoped tools:
+
+- `search_knowledge` — RAG over the project's knowledge base
+- `list_todos` / `create_todo`
+- `record_decision`
+- `get_recent_activity`
+
+Granting an integration unlocks more, gated by an allowlist you set per agent:
+
+| Grant | Tools it unlocks |
+|---|---|
+| **Repo access** | file issues, list issues, check CI status |
+| **Team chat** | post to Slack / Discord |
+| **Email** | send you reports (never clients) |
+
+<Warning>
+  If a tool result starts with `ERROR:` or reports something unavailable, the
+  agent is instructed to say so plainly — it won't claim an action succeeded
+  when it didn't.
+</Warning>
+
+## Create an agent
+
+<Steps>
+  <Step title="New agent">
+    On the desktop **Agents** page, click **New agent**.
+  </Step>
+  <Step title="Give it a mission">
+    The mission is the standing instruction every run executes — e.g. "Review
+    recent activity, summarize progress, create todos for anything dropped, and
+    notify the team."
+  </Step>
+  <Step title="Scope and grant">
+    Pick the projects it can run against and the integrations it may use.
+    Project data (knowledge, todos, decisions, timeline) is always available;
+    grants add real outside reach.
+  </Step>
+  <Step title="Choose a model">
+    Agents need reliable function calling. Pick a Gemini model, or an OpenRouter
+    free tool-capable model — the selector lists what's available from your
+    connected providers. See [AI providers](/guides/ai-providers).
+  </Step>
+</Steps>
+
+Agents are editable after creation, and you can rename them any time.
+
+## Running
+
+Hit **Run** — no further input needed. The run executes with a live tool trace,
+and the result arrives as an expandable toast (mirrored to a native OS
+notification when the app is in the background, if you've enabled that in
+**Settings → Notifications**).
+
+## Workflows
+
+A workflow is a sequence of agent steps; each step is fed the previous step's
+output. Create one from the same page for multi-stage jobs.
+
+<Note>
+  Agents run on Gemini's native function calling or an OpenRouter tool-capable
+  model. Other providers (Hugging Face, OpenAI, Anthropic, Ollama, LiteLLM)
+  power drafts, chat, and embeddings, but aren't used for agent runs — as long
+  as a Gemini key or OpenRouter provider is connected, agents work.
+</Note>

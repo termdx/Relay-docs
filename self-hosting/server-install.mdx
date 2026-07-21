@@ -1,0 +1,82 @@
+---
+title: "Server install"
+description: "Stand up the whole stack and the client portal on your own VPS, with one command."
+---
+
+One script installs the runtime binary, pulls the backend image, boots the
+whole stack, and — given a domain — serves the client portal with automatic
+TLS.
+
+## Prerequisites
+
+- A Linux VPS (x86_64) with **Docker** installed and running.
+- **DNS**: an `A` record for `relay.<youragency>.com` pointing at the box, if
+  you want the portal on your domain.
+- Ports **80** and **443** reachable (that's all the portal and desktop need).
+
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/termdx/Relay/main/scripts/install-server.sh \
+  | bash -s -- --domain relay.youragency.com
+```
+
+<Steps>
+  <Step title="Runtime binary + service">
+    Installs `relay-runtime` to `/usr/local/bin` and registers a systemd
+    service. A **runtime token** is generated — the daemon rejects any request
+    without it. The token is printed at the end; you'll paste it into the
+    desktop.
+  </Step>
+  <Step title="Backend image">
+    Pulls the backend image from GHCR, or — when the package is private — loads
+    the image tarball attached to the release. Either way, no registry login is
+    required.
+  </Step>
+  <Step title="The stack">
+    Installs the base module, generates the compose file, and brings up
+    Postgres + the backend, waiting for a healthy backend before continuing.
+  </Step>
+  <Step title="Portal at your domain">
+    With `--domain`, unpacks the portal and runs Caddy with automatic TLS. The
+    portal serves at `https://relay.youragency.com`; the API, approval,
+    webhook, and desktop paths are proxied to the backend.
+  </Step>
+</Steps>
+
+## What ends up where
+
+The domain is the single front door via Caddy (automatic TLS):
+
+| Path | Serves |
+|---|---|
+| `/` (everything else) | portal static files |
+| `/api/*` | backend — the desktop app connects here |
+| `/runtime/*` | runtime daemon (token-gated) — desktop connects here |
+| `/portal/*`, `/approve/*`, `/webhooks/*`, `/branding` | backend |
+| `/downloads/*` | mirrored desktop app bundles |
+
+Because `/api` and `/runtime` are proxied, the desktop connects entirely over
+HTTPS on port 443 — no VPN or extra open ports.
+
+## Connect the desktop
+
+After install, open the desktop app → **Settings → Agency server** and enter:
+
+- **Backend URL** — `https://relay.youragency.com/api`
+- **Runtime URL** — `https://relay.youragency.com/runtime`
+- **Token** — the runtime token printed by the installer
+
+The first person to sign in creates the owner account; everyone else
+[joins by invite](/guides/team).
+
+## Idempotent re-runs
+
+Re-running the installer keeps the existing runtime token (so connected
+desktops stay valid) and refreshes the runtime binary, portal, and download
+mirror. It's the upgrade path: re-run it to move to a newer release.
+
+<Info>
+  `RELAY_PUBLIC_URL=https://<domain>` is exported into the stack, so approval
+  links, portal sign-in emails, and webhook URLs all point at your real domain.
+</Info>

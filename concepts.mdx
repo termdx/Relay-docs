@@ -1,0 +1,90 @@
+---
+title: "Core concepts"
+description: "The handful of ideas that make the rest of Relay obvious."
+---
+
+Relay has a small vocabulary. Learn these five words and every screen makes
+sense.
+
+## The vocabulary
+
+<CardGroup cols={2}>
+  <Card title="Workspace" icon="server">
+    Your self-hosted Relay instance, managed by the runtime. One workspace per
+    deployment. It holds every client, project, integration, and AI provider.
+  </Card>
+  <Card title="Client" icon="user">
+    The agency's customer. Everything Relay tracks hangs off a client. Clients
+    sign in to the portal — never the desktop.
+  </Card>
+  <Card title="Project" icon="folder">
+    A client engagement. The project is where the timeline, todos, decisions,
+    meetings, and knowledge live. A client can have many projects.
+  </Card>
+  <Card title="Owner" icon="key">
+    You — the freelancer or agency running Relay. The owner works in the
+    desktop app and has full workspace access. Team members join by invite.
+  </Card>
+  <Card title="Knowledge base" icon="brain">
+    The per-project source of truth. Every tracked signal is embedded here, and
+    every Relay AI answer is grounded in it with citations.
+  </Card>
+</CardGroup>
+
+## The two surfaces
+
+Relay is used from two places, and they never overlap:
+
+| Surface | Who | What |
+|---|---|---|
+| **Desktop app** | You and your team | The control plane — create clients, review AI drafts, manage integrations and the workspace |
+| **Client portal** | Your clients | A branded web app at `relay.<youragency>.com` — status, approvals, and the Relay AI chat |
+
+## The core loop
+
+Every feature strengthens one loop:
+
+```text
+signal (meeting, commit, message)
+      │  via integrations
+      ▼
+tracked event on a project timeline
+      │
+      ▼
+knowledge base ingests → source of truth
+      │
+      ├──▶ AI drafts next actions → you approve → pushed to your tools
+      └──▶ client portal + Relay AI answer from the knowledge base
+```
+
+Two principles hold the loop together:
+
+<AccordionGroup>
+  <Accordion title="AI drafts, humans decide">
+    AI never writes business data or reaches a client on its own. It produces a
+    **draft** attached to an approval record. Work only lands in an external
+    tool — an issue created, an email sent — after you approve it.
+  </Accordion>
+  <Accordion title="Scoping happens in the query, never the prompt">
+    A client on the portal can only ever retrieve knowledge from their own
+    projects, enforced in SQL. Prompt injection in ingested content can't widen
+    what a client sees, because scope is never model-controlled.
+  </Accordion>
+</AccordionGroup>
+
+## The pieces
+
+| Piece | What it is |
+|---|---|
+| Desktop app | The founder control plane (Tauri + React) |
+| Backend | NestJS modular monolith — the system of record (Postgres + pgvector) |
+| Knowledge engine | pgvector retrieval — the source of truth for every answer |
+| Client portal | Where your clients see progress and talk to Relay AI |
+| Runtime + CLI | The self-hosting kernel: manifests, secrets, compose, lifecycle |
+
+<Tip>
+  The runtime is what makes Relay self-hostable: it turns declarative YAML
+  manifests into a running Docker stack. You rarely touch it directly — the
+  desktop and installer drive it for you. See
+  [Workspaces & the runtime](/self-hosting/workspaces).
+</Tip>

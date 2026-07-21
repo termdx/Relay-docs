@@ -1,0 +1,71 @@
+---
+title: "Knowledge base"
+description: "The per-project source of truth that grounds every Relay AI answer."
+---
+
+The knowledge base is Relay's source of truth. Every signal Relay tracks —
+meetings, commits, PRs, issues, decisions, todos — is ingested into a
+per-project knowledge base that can answer any question about the project
+lifecycle, with citations.
+
+## How it works
+
+Relay uses retrieval-augmented generation (RAG):
+
+```text
+domain event (meeting approved, issue closed, …)
+      │
+      ▼
+render to text → embed (768-dim) → store in pgvector with provenance
+      │
+      ▼
+question → embed → nearest-neighbor search (scoped to the project) → rank
+      │
+      ▼
+grounded answer with [n] citations back to the source chunks
+```
+
+- **Events in, knowledge out.** The engine subscribes to domain events; it's
+  never written to directly. Because it's derived state, it can always be
+  rebuilt by replaying the timeline.
+- **Provenance always.** Every chunk knows its client, project, source event,
+  and timestamp — so retrieval can be scoped and answers can cite sources.
+- **Scoped retrieval.** Filtering by project happens in the SQL `WHERE` clause,
+  never in the prompt.
+
+<Info>
+  Embeddings are 768-dimensional and stored in a pgvector column with an HNSW
+  cosine index — in the same Postgres as everything else. There's no separate
+  vector database to run.
+</Info>
+
+## Asking questions
+
+- **Clients** ask on the portal's **Ask** tab — scoped to their own projects,
+  answers cited, "Powered by Relay AI" badge. See [Client portal](/portal/overview).
+- **You** ask from the desktop's Ask Relay surface — the same engine, across
+  the workspace.
+
+If retrieval finds nothing relevant, Relay says the project history doesn't
+cover it — it never speculates about project state.
+
+## Reindexing
+
+The knowledge base rebuilds from the timeline idempotently. A reindex replays
+tracked events and re-embeds them, using content-hash deduplication so
+re-running is safe and never creates duplicate chunks. Reach for it after a
+large backfill or when changing embedding models.
+
+<Note>
+  Answer quality depends on how much project history has been ingested. A brand
+  new project with little activity gives thin answers; a project with meetings,
+  decisions, and code events gives rich, well-cited ones.
+</Note>
+
+## Which model powers it
+
+The `embed` and `chat` capabilities resolve to your default AI provider.
+Embeddings require a 768-dim model — providers without an embeddings endpoint
+(such as OpenRouter or Anthropic) automatically fall back to an installed
+Gemini or Hugging Face provider for the embed step. See
+[AI providers](/guides/ai-providers).

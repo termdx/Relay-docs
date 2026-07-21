@@ -1,0 +1,88 @@
+---
+title: "AI providers"
+description: "Bring your own model. One default powers drafts, chat, and embeddings."
+---
+
+Relay depends on **capability ports** — `draft`, `chat`, and `embed` — not on
+any one vendor. You connect providers, pick a default, and every AI feature
+routes to it. Keys live in the runtime's encrypted secret store, never in a
+manifest or in the UI after entry.
+
+## Supported providers
+
+| Provider | Chat / draft | Embeddings | Agents | Connect with |
+|---|---|---|---|---|
+| **Gemini** | ✓ | ✓ | ✓ | API key |
+| **OpenRouter** | ✓ | — (falls back) | ✓ (tool-capable models) | API key |
+| **OpenAI** | ✓ | ✓ | — | API key |
+| **Anthropic** | ✓ | — (falls back) | — | API key |
+| **Hugging Face** | ✓ | ✓ | — | API key |
+| **Ollama** | ✓ | ✓ | — | endpoint (local) |
+| **LiteLLM** | ✓ | ✓ | — | endpoint + optional key |
+
+<Info>
+  Providers without an embeddings endpoint (OpenRouter, Anthropic) automatically
+  borrow an installed Gemini or Hugging Face provider for the `embed` step, so
+  the knowledge base keeps working. Embeddings must be 768-dimensional to match
+  the pgvector column.
+</Info>
+
+## Add a provider
+
+<Steps>
+  <Step title="Open Runtime → AI providers">
+    In the desktop, go to **Runtime → AI providers** and click **Add provider**.
+  </Step>
+  <Step title="Pick the provider and authenticate">
+    Key-based providers (Gemini, OpenAI, Anthropic, Hugging Face, OpenRouter)
+    take an **API key**. Local providers take an **endpoint**: Ollama defaults
+    to `http://localhost:11434`; LiteLLM needs its base URL and takes an
+    optional key.
+  </Step>
+  <Step title="Set a default model (optional)">
+    Leave blank for a sensible per-provider default, or pin a specific model id.
+  </Step>
+  <Step title="Check health">
+    Click **Health** on the provider row to verify the key and list available
+    models.
+  </Step>
+</Steps>
+
+## The default provider
+
+The **default** provider powers all Relay AI — drafts, portal chat, and
+embeddings. On the **AI providers** page, the active one carries a `default`
+badge; click **Make default** on any other connected provider to switch. It
+takes effect immediately, no restart.
+
+<Tip>
+  A common setup: OpenRouter or Anthropic as the default for high-quality
+  client-facing chat, with a Gemini provider also connected so embeddings and
+  agent runs keep working on their own quota.
+</Tip>
+
+## From the CLI
+
+The same actions exist on the runtime CLI:
+
+```bash
+relay ai add gemini          # prompts for the key, stores it encrypted
+relay ai list
+relay ai health <id>
+relay ai models <id>
+relay ai remove <id>
+```
+
+<Warning>
+  If a provider is selected as active but has no working adapter or key, Relay
+  fails loudly with a clear message rather than silently falling back to
+  placeholder output. The offline **stub** provider (deterministic
+  placeholders, no network) is only used when it's explicitly the default.
+</Warning>
+
+## Free-tier rate limits
+
+Free API tiers throttle aggressively (Gemini's free tier is a few requests per
+minute). An agent run makes one request per tool turn, so on a free key you may
+see the run pause and retry while it waits out the limit — that's expected, not
+a hang. For snappy agent runs, use a paid key or a lighter model.

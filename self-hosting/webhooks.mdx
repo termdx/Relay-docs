@@ -1,0 +1,71 @@
+---
+title: "Webhooks"
+description: "Flow commits, PRs, issues, and transcripts into Relay in real time."
+---
+
+Inbound webhooks are how external activity reaches a project's timeline and
+knowledge base. Relay verifies every payload, normalizes it into a domain
+event, and attributes it to the project whose repository matches.
+
+## Where webhooks land
+
+With a hosted deployment, webhook receivers are on your domain (proxied to the
+backend), so there are no tunnels in production:
+
+```text
+https://relay.youragency.com/webhooks/github/:projectId
+https://relay.youragency.com/webhooks/gitlab/:projectId
+https://relay.youragency.com/webhooks/bitbucket/:projectId
+https://relay.youragency.com/webhooks/transcript/:projectId?token=<INGEST_SECRET>
+```
+
+## Verification per vendor
+
+Each vendor is authenticated differently, and unverifiable payloads are dropped
+and logged:
+
+| Vendor | Verified by |
+|---|---|
+| GitHub | HMAC SHA-256 over the raw body (`X-Hub-Signature-256`) |
+| GitLab | `X-Gitlab-Token` shared secret |
+| Bitbucket | `?token=` query secret |
+| Transcript ingest | `?token=` matched against the workspace `INGEST_SECRET` |
+
+<Info>
+  Webhook secrets are generated per provider when you connect the integration —
+  you don't invent them. They're injected into the stack at generate time.
+</Info>
+
+## Register a GitHub webhook
+
+<Steps>
+  <Step title="Connect GitHub">
+    Connect the GitHub integration first (see [Integrations](/guides/integrations)).
+    Registering repository webhooks needs the `admin:repo_hook` scope, which the
+    device flow requests.
+  </Step>
+  <Step title="Point the hook at your project">
+    In the repo's **Settings → Webhooks**, add
+    `https://relay.youragency.com/webhooks/github/<projectId>`, content type
+    `application/json`, and the generated secret. Choose the push, pull request,
+    and issues events.
+  </Step>
+  <Step title="Watch the timeline">
+    Commits, PRs, and issue activity now appear on the project timeline. Closing
+    an issue that mirrors a Relay todo auto-completes the todo.
+  </Step>
+</Steps>
+
+## What arrives
+
+Normalized events flow to two consumers: the **timeline** (an immutable feed)
+and the **knowledge base** (chunked and embedded). Vendor payloads never leak
+past the adapter — only normalized domain events move downstream.
+
+<Note>
+  Slack and Discord are outbound-only today (Relay posts to them). Google
+  Calendar inbound is planned. See [Integrations](/guides/integrations).
+</Note>
+
+For turning meeting transcripts into drafts via webhook, see
+[Transcript ingest](/guides/transcript-ingest).

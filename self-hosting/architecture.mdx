@@ -1,0 +1,78 @@
+---
+title: "Architecture"
+description: "The four systems behind Relay, and how the pieces fit."
+---
+
+Relay is composed of four systems, self-hosted as one stack the runtime
+generates for you.
+
+## The four systems
+
+<CardGroup cols={2}>
+  <Card title="System of Record" icon="database">
+    The backend API + PostgreSQL. Owns business entities: clients, projects,
+    timeline, meetings, todos, decisions, approvals.
+  </Card>
+  <Card title="System of Knowledge" icon="brain">
+    The knowledge engine (pgvector + retrieval). The source of truth for project
+    context; grounds every AI answer.
+  </Card>
+  <Card title="System of Orchestration" icon="arrows-spin">
+    Durable side effects. A transactional outbox relays external writes with
+    retries and backoff, so nothing is lost or double-fired.
+  </Card>
+  <Card title="System of Intelligence" icon="sparkles">
+    The AI provider registry + capability ports (draft, chat, embed). AI never
+    writes business data directly.
+  </Card>
+</CardGroup>
+
+## The layers
+
+```text
+┌────────────────────────┐   ┌─────────────────────────────┐
+│  Desktop (Tauri)       │   │  Client Portal (web)        │
+│  founder control plane │   │  relay.<company>.com        │
+└──────────┬─────────────┘   │  status + Relay AI chat     │
+           │ REST            └──────────────┬──────────────┘
+           │                                │ REST (scoped)
+┌──────────▼────────────────────────────────▼──────────────┐
+│  Backend — NestJS modular monolith (system of record)    │
+│  auth · client · project · timeline · meeting · approval │
+│  todo · decision · knowledge · notification · ai         │
+├──────────────────────────────────────────────────────────┤
+│  PostgreSQL (+ pgvector)                                  │
+└──────────────────────────────────────────────────────────┘
+           ▲ webhooks / APIs                ▲
+┌──────────┴──────────────┐      ┌──────────┴──────────────┐
+│  External tools          │      │  Runtime (kernel)       │
+│  GitHub · GitLab ·       │      │  workspace manifests,   │
+│  Bitbucket · Slack ·     │      │  secrets, compose       │
+│  Discord · SMTP          │      │  generation, lifecycle  │
+└──────────────────────────┘      └─────────────────────────┘
+```
+
+## The runtime is the kernel
+
+Relay self-hosts because the runtime materializes the whole stack from
+declarative YAML. Installed modules, integrations, and AI providers →
+`docker-compose.yml` + `.env` (secrets injected from the encrypted store) → a
+running stack. The same mechanism serves local dev and a production VPS. See
+[Workspaces & the runtime](/self-hosting/workspaces).
+
+## How the surfaces connect
+
+- The **desktop** talks to the backend (REST) and the runtime daemon
+  (`:51720`, token-gated). It bundles the daemon as a sidecar for local use.
+- The **portal** talks to the backend's scoped portal API only.
+- **External tools** reach the backend via webhooks; the backend reaches them
+  via adapters behind the outbox.
+
+## Design rules that shape everything
+
+- Controllers hold no business logic; modules communicate through domain
+  events, not direct calls.
+- Every client-visible side effect passes through the approval gate.
+- Tenant isolation lives in the query layer, never in prompts or UI hiding.
+- Providers (AI, integrations) are selected by config, not code — each ships a
+  stub so every flow works offline.

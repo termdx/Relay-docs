@@ -12,10 +12,51 @@
   "navigation": {
     "pages": [
       {
-        "group": "Getting Started",
+        "group": "Getting started",
         "pages": [
           "index",
-          "quickstart"
+          "quickstart",
+          "concepts"
+        ]
+      },
+      {
+        "group": "Using Relay",
+        "pages": [
+          "guides/clients-projects",
+          "guides/meetings",
+          "guides/approvals",
+          "guides/knowledge",
+          "guides/agents",
+          "guides/ai-providers",
+          "guides/integrations",
+          "guides/transcript-ingest",
+          "guides/branding",
+          "guides/team"
+        ]
+      },
+      {
+        "group": "Client portal",
+        "pages": [
+          "portal/overview"
+        ]
+      },
+      {
+        "group": "Self-hosting",
+        "pages": [
+          "self-hosting/architecture",
+          "self-hosting/server-install",
+          "self-hosting/desktop-install",
+          "self-hosting/workspaces",
+          "self-hosting/webhooks",
+          "self-hosting/security",
+          "self-hosting/releases"
+        ]
+      },
+      {
+        "group": "Reference",
+        "pages": [
+          "reference/cli",
+          "reference/configuration"
         ]
       }
     ]

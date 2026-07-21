@@ -1,0 +1,90 @@
+---
+title: "Integrations"
+description: "Connect the tools you already ship with — issues out, events in, notifications out."
+---
+
+Integrations connect Relay to the tools of the trade. Each one is a **catalog
+entry** (credentials, webhooks, health checks) plus a **backend adapter** that
+implements a stable port. Your code and manifests depend on ports, never on
+vendors, and credentials live in the runtime's encrypted secret store.
+
+## Supported set
+
+| Integration | Direction | Purpose |
+|---|---|---|
+| **GitHub** | both | issues out; commits / PRs / issues in via webhooks — closing an issue auto-completes its mirrored todo |
+| **GitLab** | both | issues out (`gitlab:group/project`); push / MR / issue webhooks in |
+| **Bitbucket** | both | issues out (`bitbucket:workspace/repo`); push / PR webhooks in |
+| **Slack** | out | incoming-webhook notifications (approvals, decisions, merges) |
+| **Discord** | out | same as Slack |
+| **SMTP** | out | approval links, digests, portal invites |
+
+<Note>
+  Google Calendar and Amazon S3 are planned and not yet available.
+</Note>
+
+## Connect GitHub with the device flow
+
+GitHub connects with an OAuth **device flow** — no client secret, no redirect
+server, so it works on a self-hosted box.
+
+<Steps>
+  <Step title="Start the connection">
+    In **Runtime → Integrations**, click **Connect** on GitHub.
+  </Step>
+  <Step title="Enter the code">
+    Relay shows a short code and opens `github.com/login/device`. Enter the code
+    and authorize.
+  </Step>
+  <Step title="Done">
+    The token goes straight into the encrypted secret store — it never
+    round-trips through the UI. GitLab, Bitbucket, and Google follow the same
+    pattern as they land.
+  </Step>
+</Steps>
+
+<Tip>
+  Token paste stays as a fallback for CI, fine-grained PATs, or air-gapped
+  setups. The GitHub OAuth app client id is remembered per workspace, so
+  teammates don't re-enter it.
+</Tip>
+
+## Connect Slack or Discord
+
+Both use an **incoming webhook**. Create one in Slack/Discord, then paste the
+webhook URL when connecting the integration. Relay posts approvals, decisions,
+and merge notifications to it through the outbox.
+
+## Connect SMTP email
+
+Pick your provider from the dropdown (Resend, Gmail, Mailgun, Brevo,
+Postmark, …) or choose custom, then enter the username and password/API key
+(with a show/hide toggle). Relay composes the correct `smtp(s)://` URL for you.
+Used for approval links, digests, and portal invites.
+
+## How data flows
+
+<AccordionGroup>
+  <Accordion title="Outbound writes go through the outbox">
+    Every external write — an issue created, an email sent, a Slack message —
+    is enqueued in the same database transaction as the state change and
+    relayed durably with retries and backoff. Nothing fires directly from an
+    event handler.
+  </Accordion>
+  <Accordion title="Inbound webhooks become timeline events">
+    Webhook receivers verify each payload's signature, normalize it into a
+    domain event, and attribute it to the project whose repo matches. Vendor
+    payloads never leak past the adapter; unverifiable payloads are dropped.
+    See [Webhooks](/self-hosting/webhooks) for setup.
+  </Accordion>
+  <Accordion title="Client-visible side effects require approval">
+    An issue created or an email sent on a client's behalf always has a prior
+    approval record behind it.
+  </Accordion>
+</AccordionGroup>
+
+## Reconnecting
+
+Connecting or removing an integration regenerates the stack so the change is
+live immediately — no manual restart. Use the **Health** action on any
+connected integration to verify credentials.

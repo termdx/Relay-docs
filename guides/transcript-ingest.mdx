@@ -1,0 +1,46 @@
+---
+title: "Transcript ingest"
+description: "Turn any call into a drafted meeting — no pasting."
+---
+
+The only manual step in the meeting loop is getting the transcript in. Ingest
+removes even that: each project has a webhook URL that turns a posted transcript
+into a drafted meeting automatically.
+
+## The ingest URL
+
+Every project exposes:
+
+```text
+POST /webhooks/transcript/:projectId?token=<INGEST_SECRET>
+Content-Type: application/json
+
+{ "title": "Weekly sync", "transcript": "..." }
+```
+
+- The response is an immediate **202** — drafting runs durably on the outbox.
+- `title` is optional; `transcript` is required.
+- Client email and repository are derived from the project.
+
+<Info>
+  The `INGEST_SECRET` is generated per workspace — never user-supplied. Find
+  the ready-to-use, copyable URL for each project on the desktop project page.
+</Info>
+
+## Wire it to a notetaker
+
+Anything that can POST JSON works — Fireflies, Fathom, Zapier, n8n, or a
+shortcut. Point it at the project's ingest URL and map the transcript into the
+`transcript` field. When a call ends, a drafted meeting appears on the project,
+ready for your review.
+
+## Import a file instead
+
+Prefer to stay manual for a one-off? The meeting form imports a transcript file
+directly — no webhook needed. See [Meetings](/guides/meetings).
+
+<Warning>
+  The token in the URL is a shared secret for that workspace. Treat the ingest
+  URL like a credential; anyone with it can create draft meetings on your
+  projects.
+</Warning>

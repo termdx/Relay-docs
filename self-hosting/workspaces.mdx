@@ -1,0 +1,85 @@
+---
+title: "Workspaces & the runtime"
+description: "The kernel that turns declarative manifests into a running stack."
+---
+
+The runtime is Relay's kernel. A **workspace** is a directory of declarative
+YAML manifests; the runtime resolves them, stores credentials encrypted,
+generates a Docker Compose stack, and drives it. The desktop and installer
+drive the runtime for you — this page is for when you want to work with it
+directly.
+
+## The workspace layout
+
+A workspace lives at `~/.relay/workspaces/<name>/`:
+
+```text
+relay.yaml             workspace config
+modules/<id>.yaml      installed feature modules
+integrations/<id>.yaml external tool connections
+ai/<id>.yaml           AI providers + capabilities
+workflows/<id>.yaml    workflow definitions
+agents/<id>.yaml       agent definitions
+secrets/               encrypted credential store (master.key + secrets file)
+generated/             docker-compose.yml, .env, runtime.lock — derived, never edit
+```
+
+<Warning>
+  Never edit anything in `generated/` or `secrets/` by hand. The runtime is the
+  only writer of workspace state; hand edits are overwritten on the next
+  generate, and secrets are encrypted.
+</Warning>
+
+## Modules and the catalog
+
+Everything installable comes from a built-in **catalog**. Installing a module
+copies its manifest into the workspace and pulls in the modules, integrations,
+and AI capabilities it depends on.
+
+```bash
+relay module catalog        # what's installable
+relay module list           # what's installed
+relay module add meeting    # install + resolve dependencies
+```
+
+The base module (`projects`) carries the backend and Postgres services — a
+fresh workspace installs it before the stack can come up.
+
+## Driving the stack
+
+```bash
+relay up          # generate compose + .env, then start the stack
+relay down        # stop it
+relay restart
+relay logs
+relay status      # what's running
+relay generate    # regenerate compose/.env without starting
+relay validate    # cross-manifest diagnostics (missing deps, dangling secrets)
+relay doctor      # environment prerequisites
+```
+
+<Info>
+  `relay up` regenerates the compose file from your installed manifests every
+  time, injecting integration credentials and AI provider keys from the
+  encrypted store — so newly connected integrations take effect without
+  reinstalling anything.
+</Info>
+
+## The daemon
+
+On a server the runtime runs as a systemd service on `:51720`, token-gated by
+`RELAY_RUNTIME_TOKEN`. The desktop bundles the same daemon as a sidecar for
+local use, and connects to a remote one over `/runtime` when pointed at an
+agency server.
+
+```bash
+relay daemon start   # start the HTTP daemon (what the desktop talks to)
+```
+
+## Multiple workspaces
+
+The default workspace serves your deployment. You can create additional named
+workspaces from the desktop workspace switcher; each gets a unique compose
+project name so their containers never collide. Running more than one full
+stack on a single host needs distinct ports — one workspace per host is the
+simple path.

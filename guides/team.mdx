@@ -1,0 +1,53 @@
+---
+title: "Team & invites"
+description: "Bring your team onto your Relay with a link — they create their own accounts."
+---
+
+The first person to set up a Relay instance becomes the **owner**. Everyone
+else joins by an invite link and creates their own credentials — you never
+manage their passwords.
+
+## Invite a teammate
+
+<Steps>
+  <Step title="Open Settings → Team">
+    As the owner, go to **Settings → Team**. You'll see the current members and,
+    below them, invite links.
+  </Step>
+  <Step title="Create an invite">
+    Click **New invite**. Relay shows the link once — copy it then, it won't be
+    shown again. Links expire after 7 days and are revocable.
+  </Step>
+  <Step title="Share it">
+    Send the link to your teammate through any channel.
+  </Step>
+</Steps>
+
+## What your teammate does
+
+The invite link opens a branded join page with:
+
+1. **Download the desktop app** (macOS or Linux), and
+2. the link to **paste into the app**: open Relay → **"Have an invite? Join
+   your agency"** → paste → pick their own name, email, and password.
+
+On success their account is created **and the app is connected** to your server
+automatically — the join hands back the backend URL, runtime URL, and token, so
+there's nothing else to configure.
+
+<Info>
+  Invite tokens are stored only as hashes — a leaked database dump can't mint
+  memberships. Joining teammates get the **member** role.
+</Info>
+
+## Members vs. owner
+
+- **Members** use the full product — clients, projects, meetings, agents.
+- **Only the owner** can create or revoke invites and manage the team.
+
+<Note>
+  On macOS the app is currently unsigned, so a browser-downloaded copy may be
+  blocked by Gatekeeper as "damaged." The join page shows the one-time fix
+  (`xattr -cr /Applications/Relay.app`). See
+  [Desktop install](/self-hosting/desktop-install).
+</Note>

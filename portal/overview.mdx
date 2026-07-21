@@ -1,0 +1,66 @@
+---
+title: "Client portal"
+description: "What your clients see at relay.youragency.com — status, approvals, and Relay AI."
+---
+
+The portal is the client-facing surface, hosted at `relay.<youragency>.com`. It
+lets clients see project status and ask questions without booking a meeting —
+and it never exposes your tools, only their project.
+
+## Signing in
+
+Clients sign in with a **magic link**: they enter their email, receive a
+single-use link valid for 15 minutes, and get a 30-day portal session. Portal
+sessions are signed with a secret derived from the backend's JWT secret, so a
+portal token can never pass the owner guard — the two identities are separated
+by signature, not just by role.
+
+<Info>
+  A sign-in request never reveals whether an email belongs to a client. You can
+  also mint a link yourself from the desktop client page (**Copy sign-in link**)
+  and paste it into any channel — handy before SMTP is configured.
+</Info>
+
+## What a client sees
+
+<CardGroup cols={2}>
+  <Card title="Overview" icon="chart-line">
+    Progress percentage, commits / PRs / issues over 30 days, an 8-week activity
+    chart, deliverables, decisions, and a client-safe activity feed.
+  </Card>
+  <Card title="Ask" icon="robot">
+    The Relay AI chat — grounded in the project's knowledge base, answers cited,
+    "Powered by Relay AI" badge. It answers only from retrieved knowledge and
+    says so when it can't.
+  </Card>
+  <Card title="Approvals" icon="check-double">
+    A "waiting on you" inbox linking to approval pages, plus a history of past
+    decisions. Updates within seconds of a decision.
+  </Card>
+  <Card title="Your brand" icon="palette">
+    Agency name, logo, and accent color throughout. See [Branding](/guides/branding).
+  </Card>
+</CardGroup>
+
+## What the client can and can't do
+
+- The portal is **read + approve**. Clients don't create work there — it isn't a
+  PM tool for them.
+- A client sees **only their own projects**, enforced in the query layer.
+- The chat answers **only** from retrieved knowledge, scoped to their projects
+  in SQL. Prompt injection in ingested content can't widen that scope.
+
+## Visibility is your call
+
+You control what each client sees, per project, from the desktop project page —
+analytics, activity feed (with or without raw code events), deliverables,
+decisions, and the AI chat. A disabled section returns a 404 from the portal
+API, so it's genuinely gone, not just hidden. **Approvals** are always on —
+they're the core loop.
+
+## Hosting
+
+The portal is a static web app served at your domain, with the API paths
+proxied to the backend. The [server installer](/self-hosting/server-install)
+sets this up — Caddy, automatic TLS, and the portal at
+`https://relay.<youragency>.com`.
